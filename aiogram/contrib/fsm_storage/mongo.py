@@ -36,14 +36,15 @@ class MongoStorage(BaseStorage):
     """
 
     def __init__(self, host='localhost', port=27017, db_name='aiogram_fsm',
-                 username=None, password=None, index=True, **kwargs):
+                 username=None, password=None, uri=None, index=True, **kwargs):
         self._host = host
         self._port = port
         self._db_name: str = db_name
         self._username = username
         self._password = password
+        self._uri: str = uri
         self._kwargs = kwargs
-
+    
         self._mongo: Union[AioMongoClient, None] = None
         self._db: Union[Database, None] = None
 
@@ -53,15 +54,19 @@ class MongoStorage(BaseStorage):
         if isinstance(self._mongo, AioMongoClient):
             return self._mongo
 
-        uri = 'mongodb://'
+        if self._uri:
+            uri = self._uri
+            
+        else:
+            uri = 'mongodb://' 
 
-        # set username + password
-        if self._username and self._password:
-            uri += f'{self._username}:{self._password}@'
+            # set username + password
+            if self._username and self._password:
+                uri += f'{self._username}:{self._password}@'
 
-        # set host and port (optional)
-        uri += f'{self._host}:{self._port}' if self._host else f'localhost:{self._port}'
-
+            # set host and port (optional)
+            uri += f'{self._host}:{self._port}' if self._host else f'localhost:{self._port}'
+            
         # define and return client
         self._mongo = await aiomongo.create_client(uri)
         return self._mongo
